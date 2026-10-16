@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prévia de Inspeção Visual de Solda</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #0284c7;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --border: #cbd5e1;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 12px; line-height: 1.4; }
+        .container { max-width: 650px; margin: 0 auto; background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h1 { font-size: 1.25rem; color: var(--primary); margin-bottom: 12px; text-align: center; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-size: 0.8rem; font-weight: 600; margin-bottom: 3px; color: var(--primary); }
+        input, select, textarea { padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--secondary); }
+        textarea { resize: vertical; min-height: 60px; }
+        
+        .photo-slot-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .slot-title { font-weight: 600; font-size: 0.85rem; color: var(--secondary); }
+        .btn-del-slot { background: var(--danger); color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; cursor: pointer; }
+        
+        .photo-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .photo-upload-box { border: 2px dashed var(--border); border-radius: 6px; height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; cursor: pointer; text-align: center; padding: 4px; position: relative; overflow: hidden; }
+        .photo-upload-box:hover { background: #f1f5f9; border-color: var(--secondary); }
+        .photo-upload-box p { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+        .photo-upload-box input { display: none; }
+        .photo-thumb-preview { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        .btn-remove-photo { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 9px; cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; }
+
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+        button.btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: #64748b; color: white; }
+        .btn-add { background: var(--secondary); color: white; padding: 8px; font-size: 0.85rem; border-radius: 6px; border: none; width: 100%; cursor: pointer; margin-bottom: 12px; font-weight: 600; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            .btn-group, .btn-add, .btn-del-slot, .photo-upload-box:not(:has(img)), button.btn { display: none !important; }
+            input, select, textarea { border: none; border-bottom: 1px solid #000; background: transparent; padding: 2px 0; }
+            .photo-grid-3 { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; }
+            .photo-upload-box { border: none !important; height: auto !important; background: transparent !important; }
+            .photo-thumb-preview { position: static !important; width: 100% !important; max-height: 180px; object-fit: contain; border: 1px solid #ccc; border-radius: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prévia - Inspeção Visual de Solda</h1>
+
+        <form id="inspectionForm">
+            <div class="form-group">
+                <label>Tag / Equipamento</label>
+                <input type="text" id="tagEquip" required placeholder="Ex: Ship Loader">
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="dataInsp" required>
+                </div>
+                <div class="form-group">
+                    <label>Resultado</label>
+                    <select id="resultado" style="font-weight: bold;">
+                        <option value="APROVADO" style="color: green;">APROVADO</option>
+                        <option value="REPROVADO" style="color: red;">REPROVADO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Observações / Resumo</label>
+                <textarea id="obs" placeholder="Ex: Perfil de solda regular, sem trincas ou porosidades superficiais visíveis..."></textarea>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;">
+
+            <label style="margin-bottom: 8px; display: block; font-size: 0.9rem; color: var(--secondary);">📸 Evidências Fotográficas (3 Fotos por Linha)</label>
+            
+            <div id="photoSlotsContainer"></div>
+
+            <button type="button" class="btn-add" onclick="addPhotoSlot()">➕ Adicionar Linha de Fotos (3 Slots)</button>
+
+            <div class="grid-2" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label>Inspetor</label>
+                    <input type="text" id="nomeInspetor" value="Diego Morais">
+                </div>
+                <div class="form-group">
+                    <label>SNCC</label>
+                    <input type="text" id="qualif" value="20251437">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar</button>
+                <button type="button" class="btn btn-primary" onclick="saveLocal()">Salvar</button>
+                <button type="button" class="btn btn-success" onclick="window.print()">Imprimir / PDF</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+        document.getElementById('dataInsp').valueAsDate = new Date();
+
+        let slotsData = [];
+
+        function renderSlots() {
+            const container = document.getElementById('photoSlotsContainer');
+            container.innerHTML = '';
+            
+            if (slotsData.length === 0) {
+                addPhotoSlot();
+                return;
+            }
+
+            slotsData.forEach((slot, slotIndex) => {
+                const card = document.createElement('div');
+                card.className = 'photo-slot-card';
+                
+                card.innerHTML = `
+                    <div class="slot-header">
+                        <span class="slot-title">Linha ${slotIndex + 1} (Até 3 fotos)</span>
+                        <button type="button" class="btn-del-slot" onclick="removeSlot(${slotIndex})">Excluir Linha</button>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 6px;">
+                        <input type="text" placeholder="Legenda desta linha (ex: Face da Solda, Raiz, Medição...)" value="${slot.desc || ''}" oninput="updateSlotDesc(${slotIndex}, this.value)">
+                    </div>
+                    <div class="photo-grid-3">
+                        ${[0, 1, 2].map(imgIdx => {
+                            const imgData = slot.photos[imgIdx];
+                            return `
+                                <div class="photo-upload-box" onclick="triggerFileInput(${slotIndex},${imgIdx})">
+                                    ${imgData ? `
+                                        <img src="${imgData}" class="photo-thumb-preview">
+                                        <button type="button" class="btn-remove-photo" onclick="event.stopPropagation(); removePhoto(${slotIndex}, ${imgIdx})">X</button>
+                                    ` : `
+                                        <span style="font-size:18px;">📷</span>
+                                        <p>Foto ${imgIdx + 1}</p>
+                                    `}
+                                    <input type="file" id="file_${slotIndex}_${imgIdx}" accept="image/*" onchange="handlePhotoUpload(event, ${slotIndex},${imgIdx})">
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function addPhotoSlot() {
+            slotsData.push({ desc: '', photos: [null, null, null] });
+            renderSlots();
+        }
+
+        function removeSlot(index) {
+            slotsData.splice(index, 1);
+            renderSlots();
+        }
+
+        function updateSlotDesc(index, val) {
+            slotsData[index].desc = val;
+        }
+
+        function triggerFileInput(slotIdx, imgIdx) {
+            document.getElementById(`file_${slotIdx}_${imgIdx}`).click();
+        }
+
+        function handlePhotoUpload(event, slotIdx, imgIdx) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    slotsData[slotIdx].photos[imgIdx] = e.target.result;
+                    renderSlots();
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removePhoto(slotIdx, imgIdx) {
+            slotsData[slotIdx].photos[imgIdx] = null;
+            renderSlots();
+        }
+
+        function saveLocal() {
+            const data = {
+                tagEquip: document.getElementById('tagEquip').value,
+                dataInsp: document.getElementById('dataInsp').value,
+                resultado: document.getElementById('resultado').value,
+                obs: document.getElementById('obs').value,
+                nomeInspetor: document.getElementById('nomeInspetor').value,
+                qualif: document.getElementById('qualif').value,
+                slotsData: slotsData
+            };
+            localStorage.setItem('previa_solda_sncc_data', JSON.stringify(data));
+            alert('Prévia salva com sucesso!');
+        }
+
+        function loadLocal() {
+            const saved = localStorage.getItem('previa_solda_sncc_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('tagEquip').value = data.tagEquip || '';
+                document.getElementById('dataInsp').value = data.dataInsp || '';
+                document.getElementById('resultado').value = data.resultado || 'APROVADO';
+                document.getElementById('obs').value = data.obs || '';
+                document.getElementById('nomeInspetor').value = data.nomeInspetor || 'Diego Morais';
+                document.getElementById('qualif').value = data.qualif || '20251437';
+                slotsData = data.slotsData || [];
+            }
+            if (slotsData.length === 0) {
+                slotsData.push({ desc: '', photos: [null, null, null] });
+            }
+            renderSlots();
+        }
+
+        function clearForm() {
+            if (confirm('Deseja limpar todos os campos e fotos?')) {
+                document.getElementById('inspectionForm').reset();
+                document.getElementById('dataInsp').valueAsDate = new Date();
+                slotsData = [{ desc: '', photos: [null, null, null] }];
+                renderSlots();
+                localStorage.removeItem('previa_solda_sncc_data');
+            }
+        }
+
+        window.onload = loadLocal;
+    </script>
+</body>
+</html>
