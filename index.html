@@ -67,9 +67,12 @@
         <h1>Prévia - Inspeção Visual de Solda</h1>
 
         <div class="history-box">
-            <label style="color: var(--secondary); margin-bottom: 4px; display: block;">📂 Histórico / Rascunhos Salvos para Edição</label>
-            <div id="historyList" style="max-height: 100px; overflow-y: auto;">
-                <span style="font-size: 0.75rem; color: #64748b;">Nenhum relatório salvo ainda.</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="color: var(--secondary); margin-bottom: 0;">📂 Histórico de Relatórios Guardados</label>
+                <button type="button" onclick="clearForm()" style="background:var(--success); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">➕ Novo Relatório</button>
+            </div>
+            <div id="historyList" style="max-height: 120px; overflow-y: auto;">
+                <span style="font-size: 0.75rem; color: #64748b;">Nenhum relatório guardado ainda.</span>
             </div>
         </div>
 
@@ -120,8 +123,8 @@
             </div>
 
             <div class="btn-group">
-                <button type="button" class="btn btn-secondary" onclick="clearForm()">Novo / Limpar</button>
-                <button type="button" class="btn btn-primary" onclick="saveToHistory()">💾 Salvar / Atualizar</button>
+                <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar Tela</button>
+                <button type="button" class="btn btn-primary" onclick="saveToHistory()">💾 Guardar no Histórico</button>
                 <button type="button" class="btn btn-success" onclick="window.print()">🖨️ PDF</button>
             </div>
         </form>
@@ -221,7 +224,7 @@
             const listContainer = document.getElementById('historyList');
             
             if (history.length === 0) {
-                listContainer.innerHTML = '<span style="font-size: 0.75rem; color: #64748b;">Nenhum relatório salvo ainda.</span>';
+                listContainer.innerHTML = '<span style="font-size: 0.75rem; color: #64748b;">Nenhum relatório guardado ainda.</span>';
                 return;
             }
 
@@ -232,7 +235,7 @@
                 div.innerHTML = `
                     <span><b>${item.tagEquip || 'Sem Tag'}</b> (${item.dataInsp || 'Sem Data'}) - <span style="color:${item.resultado === 'APROVADO' ? 'green':'red'}">${item.resultado}</span></span>
                     <div>
-                        <button type="button" onclick="loadItem(${index})" style="background:var(--secondary); color:#fff; border:none; padding:3px 6px; border-radius:4px; cursor:pointer; margin-right:4px;">Editar</button>
+                        <button type="button" onclick="loadItem(${index})" style="background:var(--secondary); color:#fff; border:none; padding:3px 6px; border-radius:4px; cursor:pointer; margin-right:4px;">Abrir/Editar</button>
                         <button type="button" onclick="deleteItem(${index})" style="background:var(--danger); color:#fff; border:none; padding:3px 6px; border-radius:4px; cursor:pointer;">Excluir</button>
                     </div>
                 `;
@@ -243,7 +246,7 @@
         function saveToHistory() {
             const tagEquip = document.getElementById('tagEquip').value;
             if (!tagEquip) {
-                alert('Preencha pelo menos a Tag / Equipamento para salvar.');
+                alert('Preencha pelo menos a Tag / Equipamento para guardar.');
                 return;
             }
 
@@ -259,12 +262,15 @@
             };
 
             let history = getHistory();
+            
             if (editIndex !== "") {
+                // Atualiza o documento que estava a ser editado
                 history[editIndex] = data;
-                alert('Relatório atualizado com sucesso!');
+                alert('Relatório atualizado com sucesso no histórico!');
             } else {
+                // Cria um NOVO documento no topo da lista sem apagar os anteriores
                 history.unshift(data);
-                alert('Relatório salvo no histórico!');
+                alert('Novo relatório guardado no histórico com sucesso!');
             }
 
             localStorage.setItem('previa_solda_history', JSON.stringify(history));
