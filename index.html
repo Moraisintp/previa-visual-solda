@@ -57,7 +57,21 @@
             .btn-group, .btn-add, .btn-del-slot, .history-box, .photo-upload-box:not(:has(img)), button.btn { display: none !important; }
             input, select, textarea { border: none; border-bottom: 1px solid #000; background: transparent; padding: 2px 0; }
             
-            /* Oculta o campo de legenda e seu espaçamento no PDF se estiver em branco */
+            /* Remove textos de orientação (placeholders) de todos os campos no PDF */
+            input::placeholder,
+            textarea::placeholder {
+                color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                opacity: 0 !important;
+            }
+
+            /* Se a observação estiver em branco, não exibe a linha preta vazia */
+            textarea:placeholder-shown,
+            textarea[data-empty="true"] {
+                border-bottom: none !important;
+            }
+
+            /* Oculta legenda de foto vazia por completo */
             .slot-desc-input:placeholder-shown,
             .slot-desc-input[data-empty="true"],
             .slot-desc-group:has(.slot-desc-input:placeholder-shown),
@@ -213,10 +227,17 @@
         }
 
         function prepareAndPrint() {
-            // Garante que todos os campos de legenda reflitam o status de preenchimento antes da impressão
+            // Atualiza status de campos de legenda
             document.querySelectorAll('.slot-desc-input').forEach(input => {
                 input.setAttribute('data-empty', input.value.trim() === '' ? 'true' : 'false');
             });
+
+            // Atualiza status do textarea de observações
+            const obsEl = document.getElementById('obs');
+            if (obsEl) {
+                obsEl.setAttribute('data-empty', obsEl.value.trim() === '' ? 'true' : 'false');
+            }
+
             window.print();
         }
 
