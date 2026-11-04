@@ -56,6 +56,15 @@
             .container { box-shadow: none; padding: 0; max-width: 100%; }
             .btn-group, .btn-add, .btn-del-slot, .history-box, .photo-upload-box:not(:has(img)), button.btn { display: none !important; }
             input, select, textarea { border: none; border-bottom: 1px solid #000; background: transparent; padding: 2px 0; }
+            
+            /* Oculta o campo de legenda e seu espaçamento no PDF se estiver em branco */
+            .slot-desc-input:placeholder-shown,
+            .slot-desc-input[data-empty="true"],
+            .slot-desc-group:has(.slot-desc-input:placeholder-shown),
+            .slot-desc-group:has(.slot-desc-input[data-empty="true"]) {
+                display: none !important;
+            }
+
             .photo-grid-3 { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; }
             .photo-upload-box { border: none !important; height: auto !important; background: transparent !important; }
             .photo-thumb-preview { position: static !important; width: 100% !important; max-height: 180px; object-fit: contain; border: 1px solid #ccc; border-radius: 4px; }
@@ -125,7 +134,7 @@
             <div class="btn-group">
                 <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar Tela</button>
                 <button type="button" class="btn btn-primary" onclick="saveToHistory()">💾 Guardar no Histórico</button>
-                <button type="button" class="btn btn-success" onclick="window.print()">🖨️ PDF</button>
+                <button type="button" class="btn btn-success" onclick="prepareAndPrint()">🖨️ PDF</button>
             </div>
         </form>
     </div>
@@ -149,14 +158,20 @@
             slotsData.forEach((slot, slotIndex) => {
                 const card = document.createElement('div');
                 card.className = 'photo-slot-card';
+                const isValEmpty = !slot.desc || slot.desc.trim() === '';
                 
                 card.innerHTML = `
                     <div class="slot-header">
                         <span class="slot-title">Linha ${slotIndex + 1} (Até 3 fotos)</span>
                         <button type="button" class="btn-del-slot" onclick="removeSlot(${slotIndex})">Excluir Linha</button>
                     </div>
-                    <div class="form-group" style="margin-bottom: 6px;">
-                        <input type="text" placeholder="Legenda desta linha (ex: Face da Solda, Raiz, Medição...)" value="${slot.desc || ''}" oninput="updateSlotDesc(${slotIndex}, this.value)">
+                    <div class="form-group slot-desc-group" style="margin-bottom: 6px;">
+                        <input type="text" 
+                               class="slot-desc-input"
+                               data-empty="${isValEmpty}" 
+                               placeholder="Legenda desta linha (ex: Face da Solda, Raiz, Medição...)" 
+                               value="${slot.desc || ''}" 
+                               oninput="updateSlotDesc(${slotIndex}, this.value, this)">
                     </div>
                     <div class="photo-grid-3">
                         ${[0, 1, 2].map(imgIdx => {
@@ -190,15 +205,25 @@
             renderSlots();
         }
 
-        function updateSlotDesc(index, val) {
+        function updateSlotDesc(index, val, element) {
             slotsData[index].desc = val;
+            if (element) {
+                element.setAttribute('data-empty', val.trim() === '' ? 'true' : 'false');
+            }
+        }
+
+        function prepareAndPrint() {
+            // Garante que todos os campos de legenda reflitam o status de preenchimento antes da impressão
+            document.querySelectorAll('.slot-desc-input').forEach(input => {
+                input.setAttribute('data-empty', input.value.trim() === '' ? 'true' : 'false');
+            });
+            window.print();
         }
 
         function triggerFileInput(slotIdx, imgIdx) {
             document.getElementById(`file_${slotIdx}_${imgIdx}`).click();
         }
 
-        // Função de compressão automática para evitar estouro de memória no celular
         function handlePhotoUpload(event, slotIdx, imgIdx) {
             const file = event.target.files[0];
             if (!file) return;
@@ -230,9 +255,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Converte para JPEG com 75% de qualidade (excelente para inspeção e super leve)
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-                    
                     slotsData[slotIdx].photos[imgIdx] = compressedDataUrl;
                     renderSlots();
                 };
